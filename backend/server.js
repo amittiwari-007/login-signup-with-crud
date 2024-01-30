@@ -7,10 +7,11 @@ var multer = require('multer'),
   bodyParser = require('body-parser'),
   path = require('path');
 var mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost/productDB");
+mongoose.connect("mongodb+srv://amiteurr:amit25112002@cluster0.pei4udf.mongodb.net/Login-signup?retryWrites=true&w=majority");
 var fs = require('fs');
 var product = require("./model/product.js");
 var user = require("./model/user.js");
+const saltRounds = 10;
 
 var dir = './uploads';
 var upload = multer({
@@ -79,12 +80,15 @@ app.post("/login", (req, res) => {
   try {
     if (req.body && req.body.username && req.body.password) {
       user.find({ username: req.body.username }, (err, data) => {
-        if (data.length > 0) {
-
-          if (bcrypt.compareSync(data[0].password, req.body.password)) {
+        if (data && data.length > 0) {
+          
+          console.log(data[0].password);
+          console.log(req.body.password);
+          if (bcrypt.compareSync(req.body.password,data[0].password)) {
+            console.log("MATCHED");
             checkUserAndGenerateToken(data[0], req, res);
           } else {
-
+            
             res.status(400).json({
               errorMessage: 'Username or password is incorrect!',
               status: false
@@ -120,11 +124,11 @@ app.post("/register", (req, res) => {
 
       user.find({ username: req.body.username }, (err, data) => {
 
-        if (data.length == 0) {
-
+        if (!data || data.length == 0) {
+          const hashedPassword = bcrypt.hashSync(req.body.password, saltRounds);
           let User = new user({
             username: req.body.username,
-            password: req.body.password
+            password: hashedPassword
           });
           User.save((err, data) => {
             if (err) {
@@ -183,14 +187,14 @@ function checkUserAndGenerateToken(data, req, res) {
 /* Api to add Product */
 app.post("/add-product", upload.any(), (req, res) => {
   try {
-    if (req.files && req.body && req.body.name && req.body.desc && req.body.price &&
+    if ( req.body && req.body.name && req.body.desc && req.body.price &&
       req.body.discount) {
 
       let new_product = new product();
       new_product.name = req.body.name;
       new_product.desc = req.body.desc;
       new_product.price = req.body.price;
-      new_product.image = req.files[0].filename;
+      // new_product.image = req.files[0].filename;
       new_product.discount = req.body.discount;
       new_product.user_id = req.user.id;
       new_product.save((err, data) => {

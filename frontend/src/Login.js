@@ -1,33 +1,34 @@
-import React, { Component } from "react";
+
+import React, { useState } from "react";
 import swal from "sweetalert";
-import { Button, TextField, Link } from "@material-ui/core";
-import { withRouter } from "./utils";
-const axios = require("axios");
-const bcrypt = require("bcryptjs");
-var salt = bcrypt.genSaltSync(10);
+import { Button, TextField, Link } from "@mui/material";
+import axios from 'axios';
+import bcrypt from "bcryptjs";
+import { useNavigate } from "react-router-dom";
 
-class Login extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      username: '',
-      password: ''
-    };
-  }
+const salt = bcrypt.genSaltSync(10);
 
-  onChange = (e) => this.setState({ [e.target.name]: e.target.value });
+function Login() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
-  login = () => {
-    const pwd = bcrypt.hashSync(this.state.password, salt);
+  const onChangeUsername = (e) => setUsername(e.target.value);
+  const onChangePassword = (e) => setPassword(e.target.value);
+
+  const login = () => {
+    const pwd = bcrypt.hashSync(password, salt);
+
+    console.log(password);
+    console.log(pwd);
 
     axios.post('http://localhost:2000/login', {
-      username: this.state.username,
-      password: pwd,
+      username: username,
+      password: password,
     }).then((res) => {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user_id', res.data.id);
-      // this.props.history.push('/dashboard');
-      this.props.navigate("/dashboard");
+      navigate("/dashboard");
     }).catch((err) => {
       if (err.response && err.response.data && err.response.data.errorMessage) {
         swal({
@@ -37,62 +38,57 @@ class Login extends React.Component {
         });
       }
     });
-  }
+  };
 
-  render() {
-    return (
-      <div style={{ marginTop: '200px' }}>
-        <div>
-          <h2>Login</h2>
-        </div>
-
-        <div>
-          <TextField
-            id="standard-basic"
-            type="text"
-            autoComplete="off"
-            name="username"
-            value={this.state.username}
-            onChange={this.onChange}
-            placeholder="User Name"
-            required
-          />
-          <br /><br />
-          <TextField
-            id="standard-basic"
-            type="password"
-            autoComplete="off"
-            name="password"
-            value={this.state.password}
-            onChange={this.onChange}
-            placeholder="Password"
-            required
-          />
-          <br /><br />
-          <Button
-            className="button_style"
-            variant="contained"
-            color="primary"
-            size="small"
-            disabled={this.state.username == '' && this.state.password == ''}
-            onClick={this.login}
-          >
-            Login
-          </Button> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-          <Link
-            // href="/register"
-            component="button"
-            style={{ fontFamily: "inherit", fontSize: "inherit" }}
-            onClick={() => {
-              this.props.navigate("/register");
-            }}
-          >
-            Register
-          </Link>
-        </div>
+  return (
+    <div style={{ marginTop: '200px' }}>
+      <div>
+        <h2>Login</h2>
       </div>
-    );
-  }
+
+      <div>
+        <TextField
+          id="standard-basic"
+          type="text"
+          autoComplete="off"
+          name="username"
+          value={username}
+          onChange={onChangeUsername}
+          placeholder="User Name"
+          required
+        />
+        <br /><br />
+        <TextField
+          id="standard-basic"
+          type="password"
+          autoComplete="off"
+          name="password"
+          value={password}
+          onChange={onChangePassword}
+          placeholder="Password"
+          required
+        />
+        <br /><br />
+        <Button
+          className="button_style"
+          variant="contained"
+          color="primary"
+          size="small"
+          disabled={username === '' || password === ''}
+          onClick={login}
+        >
+          Login
+        </Button> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <Link
+          component="button"
+          style={{ fontFamily: "inherit", fontSize: "inherit" }}
+          onClick={() => navigate("/register")}
+        >
+          Register
+        </Link>
+      </div>
+    </div>
+  );
 }
 
-export default withRouter(Login);
+export default Login;
